@@ -16,7 +16,7 @@ const (
 // VerifyNodePoolSize is a helper function that checks if the machine pool cluster size is greater than or equal to poolSize
 func VerifyNodePoolSize(steveClient *steveV1.Client, labelSelector string, poolSize int) error {
 	logrus.Info("Checking node pool")
-
+	logrus.Info("remove this...")
 	logrus.Infof("Getting the node using the label [%v]", labelSelector)
 	query, err := url.ParseQuery(labelSelector)
 	if err != nil {

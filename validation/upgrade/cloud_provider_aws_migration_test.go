@@ -8,6 +8,7 @@ import (
 	"github.com/rancher/shepherd/clients/rancher"
 	"github.com/rancher/shepherd/extensions/clusters"
 	"github.com/rancher/shepherd/pkg/session"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -48,6 +49,7 @@ func (u *MigrateCloudProviderSuite) TestAWS() {
 			rke2AWSCloudProviderMigration(u.T(), u.client, steveClusterObject)
 		})
 	}
+	logrus.Info(err)
 }
 
 func TestCloudProviderMigrationTestSuite(t *testing.T) {

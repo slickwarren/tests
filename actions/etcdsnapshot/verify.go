@@ -9,6 +9,7 @@ import (
 	steveV1 "github.com/rancher/shepherd/clients/rancher/v1"
 	extdefault "github.com/rancher/shepherd/extensions/defaults"
 	shepherdsnapshot "github.com/rancher/shepherd/extensions/etcdsnapshot"
+	"github.com/sirupsen/logrus"
 	kwait "k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -40,7 +41,7 @@ func VerifyRKE1Snapshots(client *rancher.Client, clusterName string, snapshotIDs
 	if err != nil {
 		return err
 	}
-
+	logrus.Info("Testing")
 	return nil
 }
 
