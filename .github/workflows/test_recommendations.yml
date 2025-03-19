@@ -1,0 +1,30 @@
+name: Determine Tests Bot
+on:
+  pull_request:
+    branches:
+      - main
+ 
+jobs:
+  add-comment-to-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+ 
+      - name: Get Recommended Tests
+        run: |
+            tests_from_script=$(./.github/scripts/check-changes.sh)
+            echo "rec_tests='Hi, I am a friendly algorithm to help determine which tests you brok - erm, modified. I suggest you run these\n $tests_from_script'" >> $GITHUB_ENV
+      - name: Add comment to PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if -n $tests_from_script
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              issue_number: context.issue.number,
+              repo: context.repo.repo,
+              body: process.env.rec_tests
+            })
