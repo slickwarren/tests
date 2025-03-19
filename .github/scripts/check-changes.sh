@@ -35,7 +35,7 @@ grep-for-function-name() {
 find-all-functions-anywhere() {
     for function_name in $1 ; do
         # echo "Getting function matches in files..."
-        contained_files=$(grep -n -r "$function_name" --exclude-dir=".git" --exclude-dir=".github" . | grep -v "//" | grep -v "go.mod" | grep -v "go.sum" | grep -v "main.go" )
+        contained_files==$(grep -n -r "$function_name" --exclude-dir=".git" --exclude-dir=".github" . | grep -v "//" | grep -v ".sh" | grep -v "go.mod" | grep -v "go.sum" | grep -v "main.go" )
         # echo "$contained_files"
         echo "$contained_files" >> $TEMP_DIR/diff.test-functions
     done
@@ -45,7 +45,7 @@ grep-for-suite-and-test-name() {
     # Extract Suite Name from ()
     suite_name=$(echo "$1" | grep func | grep -oP '\((.*?)\)' | grep -oP '\*\K\w+' | grep -v "testing" | grep -v "github.com")
     
-    # Extract Test Name
+    # Extract Test Name aka function name
     test_name=$(echo "$1" | grep -oP 'func \(\w+\s\*\w+\) \K\w+')
     
     # Output both suite name and test name
@@ -55,12 +55,17 @@ grep-for-suite-and-test-name() {
 }
 
 touch $TEMP_DIR/diff.used-anywhere
-git fetch --all
-git diff origin/$TARGET_BRANCH | while read line; do
+git fetch --all -q
+git config user.name "github-actions"
+git config user.email "github-actions@github.com"
+# get all the tests themselves
+git rebase origin/$TARGET_BRANCH --strategy-option=theirs
+git diff origin/$TARGET_BRANCH -- . ':(exclude)*.sh' ':(exclude)*.yml' | while read line; do
     grep-for-suite-and-test-name "$line" >> $TEMP_DIR/diff.used-anywhere
 done
 
-git diff origin/$TARGET_BRANCH | while read line; do
+# get everything else that changed
+git diff origin/$TARGET_BRANCH -- . ':(exclude)*.sh' ':(exclude)*.yml' | while read line; do
     next=$(grep-for-function-name "$line")
     if [[ $next == *"Test"* ]]; then
         echo $next >> $TEMP_DIR/diff.used-anywhere
@@ -70,6 +75,8 @@ git diff origin/$TARGET_BRANCH | while read line; do
 done
 
 touch $TEMP_DIR/diff.test-functions
+
+# find tests that were affected by the changes in the PR
 while IFS= read -r lines_not_tests; do
     if [[ "$lines_not_tests" != *"func"* && "$lines_not_tests" != *"TestSuite"* ]]; then
         if [[ "$lines_not_tests" == *".go"* ]]; then
@@ -78,18 +85,21 @@ while IFS= read -r lines_not_tests; do
 
             file=$(echo "$lines_not_tests" | awk -F":" '{print $1}')
             # find the parent function that this line belongs to
+            if [[ ${file:0:1} == "=" ]]; then
+                file="${file:1}"
+            fi
             function_line=$(head -n "$line_number" "$file" | tac | grep -m 1 '^func' | tac)
             function_name_tmp=$(grep-for-function-name "$function_line")
             # check for new function everywhere. If its a test, add it to the list. 
             
             if [ -n "$function_name_tmp" ]; then
-                echo "$function_name_tmp"
+                # echo "$function_name_tmp"
                 find-all-functions-anywhere "$function_name_tmp"
             fi
 
             test_name=$(grep-for-suite-and-test-name "$function_line")
             if ! grep -q "$test_name" $TEMP_DIR/diff.used-anywhere; then
-                echo "$function_line"
+                # echo "$function_line"
                 echo $test_name >> $TEMP_DIR/diff.used-anywhere
             fi
         fi
@@ -107,7 +117,6 @@ while IFS= read -r lines_not_tests; do
 done < $TEMP_DIR/diff.test-functions
 
 wait
-
 cat $TEMP_DIR/diff.used-anywhere
 
 # Clean up
