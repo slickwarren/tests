@@ -258,7 +258,7 @@ func NewK3SRKE2ClusterConfig(clusterName, namespace string, clustersConfig *Clus
 		Kind:       "Cluster",
 		APIVersion: "provisioning.cattle.io/v1",
 	}
-	logrus.Info("This is a test...")
+	logrus.Info("This is a test.............")
 
 	//metav1.ObjectMeta
 	objectMeta := metav1.ObjectMeta{
