@@ -51,7 +51,7 @@ func (h *HarvesterTestSuite) SetupSuite() {
 func (h *HarvesterTestSuite) TestImport() {
 	harvesterInRancherID, err := harvesteraction.RegisterHarvesterWithRancher(h.client, h.harvesterClient)
 	require.NoError(h.T(), err)
-	logrus.Info(harvesterInRancherID)
+	logrus.Info(harvesterInRancherID + "interesting")
 }
 
 // In order for 'go test' to run this suite, we need to create
