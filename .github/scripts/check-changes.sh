@@ -59,7 +59,8 @@ git fetch --all -q
 git config user.name "github-actions"
 git config user.email "github-actions@github.com"
 # get all the tests themselves
-git rebase origin/$TARGET_BRANCH --strategy-option=theirs
+git checkout $1 -q
+git rebase origin/$TARGET_BRANCH --strategy-option=theirs -q
 git diff origin/$TARGET_BRANCH -- . ':(exclude)*.sh' ':(exclude)*.yml' | while read line; do
     grep-for-suite-and-test-name "$line" >> $TEMP_DIR/diff.used-anywhere
 done
@@ -117,7 +118,11 @@ while IFS= read -r lines_not_tests; do
 done < $TEMP_DIR/diff.test-functions
 
 wait
-cat $TEMP_DIR/diff.used-anywhere
 
+curl_digestable_string=""
+while IFS= read -r official_tests; do
+    curl_digestable_string+=$"\n$official_tests"
+done < $TEMP_DIR/diff.used-anywhere
+echo "$curl_digestable_string"
 # Clean up
 rm -rf $TEMP_DIR
