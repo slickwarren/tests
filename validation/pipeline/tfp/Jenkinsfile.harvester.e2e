@@ -103,9 +103,7 @@ node("harvester-vpn-1") {
                             /root/go/bin/gotestsum --format standard-verbose --packages=${testsDir} --junitfile ${testResultsOut} --jsonfile ${testResultsJSON} -- -timeout=${timeout} -v ${params.TEST_CASE}"
                             """
                             sh "docker cp ${testContainer}:${rootPath}${filename} ${filename}"
-                            sh "mkdir harvester"
-                            sh "docker cp ${testContainer}:${rootPath}modules/sanity/harvester/ ."
-                            sh "ls -la harvester/"
+                            
                           
                         } catch(err) {
                             echo "Test run had failures. Collecting results... ${err}"
@@ -158,15 +156,21 @@ node("harvester-vpn-1") {
 
                           try {
                             sh """
+
+                            docker cp ${testContainer}:${rootPath}modules/sanity/harvester/ .;
+                            pwd;
+                            ls -la harvester/ ;
                             docker run -v tests${validationVolume}:/root --name ${golangTestContainer} -t --env-file ${envFile} ${imageName} sh -c "/root/go/bin/gotestsum --format standard-verbose --packages=${golangTestDir} --junitfile ${testResultsOut} -- -tags=${TAGS} ${GO_TEST_CASE} -timeout=${timeout} -v ;"
-                            ${testRootPath}pipeline/scripts/build_qase_reporter.sh;
-                            ${testRootPath}reporter;
                             """
+                            // ${testRootPath}pipeline/scripts/build_qase_reporter.sh;
+                            // ${testRootPath}reporter;
                               
                           } catch(err) {
                             echo "${err} Validation tests had failures. Aborting"
                           }
                           sh """
+                          docker stop ${golangTestContainer} || true
+                          docker stop hvst${golangTestContainer} || true
                           docker rm ${golangTestContainer} || true
                           docker rm hvst${golangTestContainer} || true
                           
@@ -178,17 +182,27 @@ node("harvester-vpn-1") {
                     }//dir
                     stage('Cleanup terraform resources'){
                       try {
-                          sh "ls -la \$(pwd)/harvester/"
 
+                        dir ("./") {
+                          if (env.AWS_SSH_PEM_KEY && env.AWS_SSH_KEY_NAME) {
+                            dir("./harvester/.ssh") {
+                              def decoded = new String(AWS_SSH_PEM_KEY.decodeBase64())
+                              writeFile file: AWS_SSH_KEY_NAME, text: decoded
+                            }
+                          }
+                          
                           sh """
                           docker run --rm -v \$(pwd)/harvester:/terraform-files \
+                              -v \$(pwd)/harvester/.ssh:/root/go/src/github.com/rancher/tfp-automation/.ssh \
                               -w /terraform-files hashicorp/terraform:latest \
-                              init && terraform destroy --auto-approve
+                              destroy --auto-approve
                           """
+                        }
                       }
                       catch(err) {
                         echo "${err} captured, there be dragons..."
                       }
+                      sh "docker stop ${testContainer}"
                       sh "docker volume rm ${validationVolume} || true"
                       sh "docker rm ${testContainer} || true"
                       } //cleanup

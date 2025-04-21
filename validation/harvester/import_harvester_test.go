@@ -25,7 +25,6 @@ type HarvesterTestSuite struct {
 	session         *session.Session
 	clusterID       string
 	harvesterClient *harvester.Client
-	userConfig      *provisioninginput.Config
 }
 
 func (h *HarvesterTestSuite) TearDownSuite() {
@@ -55,8 +54,6 @@ func (h *HarvesterTestSuite) TestImport() {
 	harvesterInRancherID, err := harvesteraction.RegisterHarvesterWithRancher(h.client, h.harvesterClient)
 	require.NoError(h.T(), err)
 	logrus.Info(harvesterInRancherID)
-
-	// the below is useful for most cases where daisy-chaining this job to others.
 
 	cluster, err := h.client.Management.Cluster.ByID(harvesterInRancherID)
 	require.NoError(h.T(), err)
