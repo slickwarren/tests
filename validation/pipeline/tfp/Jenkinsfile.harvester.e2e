@@ -5,6 +5,8 @@ node("harvester-vpn-1") {
   def testRootPath = "/root/go/src/github.com/rancher/tests/validation/"
   def testsDir = "github.com/rancher/tfp-automation/tests/${env.TEST_PACKAGE}"
   def golangTestDir = "github.com/rancher/tests/validation/${env.GO_TEST_PACKAGE}"
+  def golangHvstDir = "github.com/rancher/tests/validation/harvester"
+  def hvstTestCase = "-run ^TestHarvesterTestSuite\$"
   def filename = "config.yml"
   def job_name = "${JOB_NAME}"
   if (job_name.contains('/')) { 
@@ -94,7 +96,7 @@ node("harvester-vpn-1") {
                         sh "docker volume create --name ${validationVolume}"
                      }
 
-                    stage('Run Infrastructure Module Test') {
+                    stage('Run Infrastructure TFP Test') {
                         try {
                             sh """
                             docker run -v ${validationVolume}:/root --name ${testContainer} -t --env-file ${envFile} ${imageName} sh -c "
@@ -102,8 +104,8 @@ node("harvester-vpn-1") {
                             """
                             sh "docker cp ${testContainer}:${rootPath}${filename} ${filename}"
                             sh "mkdir harvester"
-                            sh "docker cp ${testContainer}:${rootPath}modules/sanity/harvester/ ./harvester/"
-                            sh "cat ${filename}"
+                            sh "docker cp ${testContainer}:${rootPath}modules/sanity/harvester/ ."
+                            sh "ls -la harvester/"
                           
                         } catch(err) {
                             echo "Test run had failures. Collecting results... ${err}"
@@ -140,15 +142,25 @@ node("harvester-vpn-1") {
                             sh "docker cp ${testContainer}:${rootPath}${filename} ${filename}"
                           }
                         }
+                        stage('Connect Rancher -> Harvester') {
+
+                          try {
+                            // this test also writes harvesterCloudCredentials to the config
+                            sh """
+                            docker run -v tests${validationVolume}:/root --name hvst${golangTestContainer} -t --env-file ${envFile} ${imageName} sh -c "/root/go/bin/gotestsum --format standard-verbose --packages=${golangHvstDir} --junitfile ${testResultsOut} -- -tags=${TAGS} ${hvstTestCase} -timeout=${timeout} -v "
+                            """
+                          } catch(err) {
+                            echo "${err} Unable to connect harvester to new rancher setup. Aborting"
+                          }
+                          
+                        }
                         stage('Run Validation Tests') {
 
                           try {
                             sh """
-                            docker run -v tests${validationVolume}:/root --name ${golangTestContainer} -t --env-file ${envFile} ${imageName} sh -c "/root/go/bin/gotestsum --format standard-verbose --packages=${golangTestDir} --junitfile ${testResultsOut} -- -tags=${TAGS} ${GO_TEST_CASE} -timeout=${timeout} -v "
-                            """
-                            // figure out how to pull imported cluster info from ^ and use it to make a cloud credential for the below job
-                            sh """
-                            docker run -v tests${validationVolume}:/root --name ${golangTestContainer} -t --env-file ${envFile} ${imageName} sh -c "/root/go/bin/gotestsum --format standard-verbose --packages=${golangTestDir} --junitfile ${testResultsOut} -- -tags=${TAGS} ${GO_TEST_CASE} -timeout=${timeout} -v "
+                            docker run -v tests${validationVolume}:/root --name ${golangTestContainer} -t --env-file ${envFile} ${imageName} sh -c "/root/go/bin/gotestsum --format standard-verbose --packages=${golangTestDir} --junitfile ${testResultsOut} -- -tags=${TAGS} ${GO_TEST_CASE} -timeout=${timeout} -v ;"
+                            ${testRootPath}pipeline/scripts/build_qase_reporter.sh;
+                            ${testRootPath}reporter;
                             """
                               
                           } catch(err) {
@@ -156,6 +168,7 @@ node("harvester-vpn-1") {
                           }
                           sh """
                           docker rm ${golangTestContainer} || true
+                          docker rm hvst${golangTestContainer} || true
                           
                           docker rmi ${imageName} || true
                           
@@ -165,16 +178,19 @@ node("harvester-vpn-1") {
                     }//dir
                     stage('Cleanup terraform resources'){
                       try {
+                          sh "ls -la \$(pwd)/harvester/"
+
                           sh """
-                          docker run --rm -v harvester:/terraform-files \
+                          docker run --rm -v \$(pwd)/harvester:/terraform-files \
                               -w /terraform-files hashicorp/terraform:latest \
-                              init && terraform destroy -auto-approve
+                              init && terraform destroy --auto-approve
                           """
                       }
                       catch(err) {
                         echo "${err} captured, there be dragons..."
                       }
                       sh "docker volume rm ${validationVolume} || true"
+                      sh "docker rm ${testContainer} || true"
                       } //cleanup
                 } //params
             } //credentials
