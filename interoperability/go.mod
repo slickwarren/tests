@@ -11,6 +11,8 @@ replace (
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20191219222812-2987a591a72c
 	github.com/rancher/rancher/pkg/apis => github.com/rancher/rancher/pkg/apis v0.0.0-20250410003522-2a1bf3d05723
 	github.com/rancher/rancher/pkg/client => github.com/rancher/rancher/pkg/client v0.0.0-20250212213103-5c3550f55322
+
+	github.com/rancher/tests/actions => ./../actions
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0
 	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.28.0
@@ -19,7 +21,6 @@ replace (
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.28.0
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v1.3.1
 	go.qase.io/client => github.com/rancher/qase-go/client v0.0.0-20231114201952-65195ec001fa
-
 	helm.sh/helm/v3 => github.com/rancher/helm/v3 v3.16.1-rancher1
 	k8s.io/api => k8s.io/api v0.32.2
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.2
@@ -65,7 +66,7 @@ require (
 	github.com/rancher/fleet/pkg/apis v0.12.0
 	github.com/rancher/norman v0.6.0
 	github.com/rancher/rancher/pkg/apis v0.0.0
-	github.com/rancher/shepherd v0.0.0-20250411212007-f3f2fd268849
+	github.com/rancher/shepherd v0.0.0-20250804172049-aa2e21c5b6aa
 	github.com/rancher/tests/actions v0.0.0-20250505204226-5b136337f7c5
 	github.com/rancher/tfp-automation v0.0.0-20250611224440-c60e4d69096c
 	github.com/sirupsen/logrus v1.9.3
@@ -126,6 +127,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/kubereboot/kured v1.13.1 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
@@ -143,6 +145,7 @@ require (
 	github.com/openshift/custom-resource-status v1.1.2 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/sftp v1.13.5 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.72.0 // indirect
 	github.com/prometheus/client_golang v1.20.5 // indirect
