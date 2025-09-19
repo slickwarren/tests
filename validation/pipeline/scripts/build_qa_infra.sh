@@ -183,7 +183,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # --- Rancher Cluster Module ---
-if [[ "$BUILD_DOWNSTREAM_CLUSETER" == "true" ]]; then
+if [[ "$BUILD_DOWNSTREAM_CLUSTER" == "true" ]]; then
     ./root/go/src/github.com/rancher/tests/validation/pipeline/scripts/build_downstream_cluster.sh
 fi
 
