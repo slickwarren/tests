@@ -284,7 +284,7 @@ node("harvester-vpn-1") {
 
 
                         sh returnStdout: true, script: "yq e '.kubernetes_version = \"${RANCHER_KUBERNETES_VERSION}\"' -i qa-infra-automation/ansible/vars.yaml"
-                        sh returnStdout: true, script: "yq e '.rancher_version = \"${RANCHER_VERSION}\"' -i qa-infra-automation/ansible/vars.yaml"
+                        sh returnStdout: true, script: "yq e '.rancher_version = \"${RANCHER_CHART_VERSION}\"' -i qa-infra-automation/ansible/vars.yaml"
                         sh returnStdout: true, script: "yq e '.rancher_image_tag = \"${RANCHER_VERSION}\"' -i qa-infra-automation/ansible/vars.yaml"
                         sh returnStdout: true, script: "yq e '.cert_manager_version = \"${CERT_MANAGER_VERSION}\"' -i qa-infra-automation/ansible/vars.yaml"
                         sh returnStdout: true, script: "yq e '.rancher_chart_repo_url = \"${RANCHER_HELM_REPO_URL}\"' -i qa-infra-automation/ansible/vars.yaml"
