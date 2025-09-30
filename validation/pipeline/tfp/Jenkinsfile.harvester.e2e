@@ -134,8 +134,17 @@ node("harvester-vpn-1") {
                         if [[ -z "$EXISTING_HARVESTER_IP" ]]; then
                             sleep 300
                         fi
-                        
-                        export inode2=$(ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i .ssh/$AWS_SSH_KEY_NAME rancher@$inode 'ip a | grep "/32" | grep -v flannel | head -1' | awk '{print $2}' | cut -d / -f 1)
+                        while true; do
+                            inode2=$(ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                                -i ".ssh/$AWS_SSH_KEY_NAME" rancher@"$inode" \
+                                'ip a | grep "/32" | grep -v flannel | head -1' \
+                                | awk '{print $2}' | cut -d / -f 1)
+
+                            if [[ -n "$inode2" ]]; then
+                                break
+                            fi
+                            sleep 5
+                        done
 
                         echo "$inode2" > host.txt
 
@@ -418,31 +427,25 @@ echo "}\\n" >> "${tfvars_filepath}"
                         }
                     }
                     stage('Run Validation Tests') {
-                        try {
-                            sh """
+                        
+                        sh """
                         docker run -v ${validationVolume}:/root --name ${golangTestContainer} -t ${imageName}${TOFU_VERSION}${HARVESTER_PROVIDER_VERSION}${RANCHER2_PROVIDER_VERSION}:${commitID} sh -c "cp \$CATTLE_TEST_CONFIG . && export CATTLE_TEST_CONFIG=/root/go/src/github.com/rancher/tests/config.yml && /root/go/bin/gotestsum --format standard-verbose --packages=${golangTestDir} --junitfile ${testResultsOut} -- -tags=${TAGS} ${GO_TEST_CASE} -timeout=${timeout} -v ;"
                         """
-                        } catch (err) {
-                            echo "${err} Validation tests had failures. Aborting"
-                        }
+                        
                         sh """
                         docker stop ${golangTestContainer} || true
                         docker rm ${golangTestContainer} || true                        
                         """
                     }
                     stage('Cleanup terraform resources') {
-                        try {
-                            if (env.CLEANUP == "true") {
-                                dir ("./") {
-                                    writeFile file: 'seeder.yaml', text: SEEDER_KUBECONFIG
-                                    sh """#!/bin/bash
-                              export KUBECONFIG=seeder.yaml
-                              kubectl delete clusters.metal/${HARVESTER_CLUSTER_NAME} -n tink-system || true
-                               """
-                                }
+                        if (env.CLEANUP == "true") {
+                            dir ("./") {
+                                writeFile file: 'seeder.yaml', text: SEEDER_KUBECONFIG
+                                sh """#!/bin/bash
+                            export KUBECONFIG=seeder.yaml
+                            kubectl delete clusters.metal/${HARVESTER_CLUSTER_NAME} -n tink-system || true
+                            """
                             }
-                        } catch (err) {
-                            echo "${err} captured, there be dragons..."
                         }
                     } //cleanup
                 } //params

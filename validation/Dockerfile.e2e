@@ -69,7 +69,8 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
     chmod +x /usr/local/bin/yq && \
     mv ./kubectl /usr/local/bin/kubectl
 
-
+# necessary to run if statements using [[ ]]
+SHELL ["/bin/bash", "-c"] 
 
 RUN if [[ "$RANCHER2_PROVIDER_VERSION" == *"-dev"* ]]; then \
       chmod +x ./scripts/tofu/dev-provider.sh && ./scripts/tofu/dev-provider.sh rancher2 "https://github.com/rancher/terraform-provider-rancher2.git" ; \
@@ -78,9 +79,6 @@ RUN if [[ "$RANCHER2_PROVIDER_VERSION" == *"-dev"* ]]; then \
       chmod +x ./scripts/tofu/dev-provider.sh && ./scripts/tofu/dev-provider.sh harvester "https://github.com/harvester/terraform-provider-harvester.git" ; \
     fi; \
     wait
-
-# necessary to run if statements using [[ ]]
-SHELL ["/bin/bash", "-c"] 
 
 ARG RKE_VERSION
 RUN if [[ -n "$RKE_VERSION" ]] ; then echo installing latest version RKE && \

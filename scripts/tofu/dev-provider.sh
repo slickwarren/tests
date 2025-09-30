@@ -3,6 +3,7 @@
 # ./setup-provider.sh <provider> <version>
 
 set -e 
+trap 'rm -rf provider-clone' EXIT
 
 # Validate user input
 if [ $# -ne 2 ]; then
@@ -25,8 +26,8 @@ fi
 
 # Download binary
 DIR=~/.terraform.d/plugins/terraform.local/${PROVIDER}/${PROVIDER}/${VERSION}/${PLATFORM}
-mkdir -p $DIR
 (umask u=rwx,g=rwx,o=rwx && mkdir -p $DIR)
+
 git clone $GITURL provider-clone
 cd provider-clone
 go build -o terraform-provider-${PROVIDER} && \
