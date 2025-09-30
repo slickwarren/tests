@@ -90,7 +90,6 @@ node("harvester-vpn-1") {
                         def publicSSHKey = sh(script: "ssh-keygen -f .ssh/${AWS_SSH_KEY_NAME} -y", returnStdout: true).trim()
                         sh "yq e '.spec.clusterConfig.sshKeys.[0] = \"${publicSSHKey}\"' -i node_manifest.yaml"
 
-                        // env.EXISTING_HARVESTER_IP="10.115.252.70"
                         // install harvester onto baremetal using seeder
                         sh '''#!/bin/bash
                         export inode="${EXISTING_HARVESTER_IP}"
@@ -254,7 +253,7 @@ node("harvester-vpn-1") {
                         }
 
                         commitID = sh(
-                            script: "cd qa-infra-automation && git rev-parse --short HEAD",
+                            script: "cd infra-repo && git rev-parse --short HEAD",
                             returnStdout: true
                         ).trim()
 
@@ -264,6 +263,8 @@ node("harvester-vpn-1") {
                         ).trim()
 
                         if (!exists) {
+                            sh "ln -s test-repo tests"
+                            sh "ln -s infra-repo qa-infra-automation"
                             sh "docker build . -f ./tests/validation/Dockerfile.e2e \
                                         --build-arg TOFU_VERSION=${TOFU_VERSION} \
                                         --build-arg HARVESTER_PROVIDER_VERSION=${HARVESTER_PROVIDER_VERSION} \
