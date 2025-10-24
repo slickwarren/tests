@@ -15,6 +15,10 @@ ARG AZURE_CLIENT_SECRET
 ENV AZURE_CLIENT_SECRET=$AZURE_CLIENT_SECRET
 ARG RANCHER_LINODE_ACCESSKEY
 ENV RANCHER_LINODE_CREDENTIAL=$RANCHER_LINODE_ACCESSKEY
+
+ARG QA_IAM_WEBHOOK
+ENV QA_IAM_WEBHOOK=$QA_IAM_WEBHOOK
+
 ENV TZ="America/New_York date"
 
 ARG OVERRIDE_REGION
@@ -51,6 +55,7 @@ CMD for i in `ls *.yaml`; \
     do cat $i | sed -e 's/USERKEYS/'"${USER_KEYS}"'/g' -i $i; done ; \
     echo $USER_KEYS; \
     for i in `ls *.yaml`; \
+    do cat $i | sed -e 's/QA_IAM_WEBHOOK/'"${QA_IAM_WEBHOOK}"'/g' -i $i; done ; \
     do cat $i | sed -e 's/DONOTDELETEKEYS/'"${DONOTDELETE_KEYS}"'/g' -i $i; done; \
     if [ "$CUSTODIAN_YAML" = "aws.yaml" ] || [ "$CUSTODIAN_YAML" = "untag-to-delete.yaml" ] ; then \
     custodian run --output-dir=. --region="us-east-2" ${CUSTODIAN_YAML}; \
