@@ -3,7 +3,7 @@ policies:
   resource: iam-user
   filters:
     - type: credential
-      key: mfa_active
+      key: access_keys.active
       value: true
     - type: credential
       key: access_keys.last_rotated
@@ -12,7 +12,7 @@ policies:
       op: greater-than
   actions:
     - type: webhook
-      url: "QAIAMWEBHOOK"
+      url: QAIAMWEBHOOK
       batch: true
       body: |
         {
