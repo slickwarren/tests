@@ -1,23 +1,23 @@
 policies:
-- name: iam-qa-aws-key-too-old
-  resource: iam-user
-  filters:
-    - type: credential
-      key: mfa_active
-      value: true
-    - type: credential
-      key: access_keys.last_rotated
-      value_type: age
-      value: 90
-      op: greater-than
-  actions:
-    - type: webhook
-      url: QA_IAM_WEBHOOK
-      batch: true
-      body: |
-        {
-          "text": "⚠️ *{{ policy.name }}* detected IAM users with access keys older than 90 days:\n{% for r in resources %}• {{ r.user_name }}\n{% endfor %}"
-        }
+# - name: iam-qa-aws-key-too-old
+#   resource: iam-user
+#   filters:
+#     - type: credential
+#       key: mfa_active
+#       value: true
+#     - type: credential
+#       key: access_keys.last_rotated
+#       value_type: age
+#       value: 90
+#       op: greater-than
+#   actions:
+#     - type: webhook
+#       url: QA_IAM_WEBHOOK
+#       batch: true
+#       body: |
+#         {
+#           "text": "⚠️ *{{ policy.name }}* detected IAM users with access keys older than 90 days:\n{% for r in resources %}• {{ r.user_name }}\n{% endfor %}"
+#         }
 # Instances
 - name: mark-unknown-instances-for-deletion
   resource: aws.ec2
