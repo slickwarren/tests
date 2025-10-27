@@ -328,7 +328,7 @@ policies:
       op: delete
       days: 2
 
-- name: nlb-unmark-if-friday-tagged
+- name: classic-nlb-unmark-if-friday-tagged
   resource: elb
   description: |
     Remove the deletion tag from any resource group which now contain resources
@@ -342,7 +342,7 @@ policies:
     - type: remove-tag
       tags: ['ec2_unknown_user', 'ec2_known_user']
 
-- name: ec2-delete-classc-nlbs
+- name: ec2-delete-classic-nlbs
   resource: elb
   description: |
     Delete any marked nlbs which have been 
