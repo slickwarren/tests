@@ -11,13 +11,40 @@ policies:
       value: 90
       op: greater-than
   actions:
-    - type: webhook
-      url: QAIAMWEBHOOK
-      batch: true
-      body: |
-        {
-          "text": "⚠️ *{{ policy.name }}* detected IAM users with access keys older than 90 days:\n{% for r in resources %}• {{ r.user_name }}\n{% endfor %}"
-        }
+    - type: notify
+      slack_template: slack
+      slack_msg_color: danger
+      to:
+        - QAIAMWEBHOOK
+      transport:
+        type: sqs
+        queue: https://sqs.us-east-2.amazonaws.com/125601231307/ecm-qa-sqs
+
+  # - type: webhook
+  #   url: QAIAMWEBHOOK
+  #   batch: false
+  #   body: >
+  #     {
+  #       "text": "⚠️ *{{ policy.name }}* detected IAM users with old access keys.",
+  #       "blocks": [
+  #         {
+  #           "type": "section",
+  #           "text": {
+  #             "type": "mrkdwn",
+  #             "text": "The following IAM users have access keys older than 90 days:"
+  #           }
+  #         },
+  #         {
+  #           "type": "section",
+  #           "block_id": "iam_users",
+  #           "text": {
+  #             "type": "mrkdwn",
+  #             "text": "{% for r in resources %}• {{ r.user_name }}\n{% endfor %}"
+  #           }
+  #         }
+  #       ]
+  #     }
+
 # Instances
 - name: mark-unknown-instances-for-deletion
   resource: aws.ec2

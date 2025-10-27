@@ -57,7 +57,7 @@ CMD for i in `ls *.yaml`; \
     for i in `ls *.yaml`; \
     do cat $i | sed -e 's/DONOTDELETEKEYS/'"${DONOTDELETE_KEYS}"'/g' -i $i; done; \
     for i in `ls *.yaml`; \
-    do cat $i | sed -e 's/QAIAMWEBHOOK/'"${QA_IAM_WEBHOOK}"'/g' -i $i; done; \
+    do sed -i "s|QAIAMWEBHOOK|${QA_IAM_WEBHOOK}|g" "$i"; done; \
     if [ "$CUSTODIAN_YAML" = "aws.yaml" ] || [ "$CUSTODIAN_YAML" = "untag-to-delete.yaml" ] ; then \
     custodian run --output-dir=. --region="us-east-2" ${CUSTODIAN_YAML}; \
     custodian run --output-dir=. --region="us-east-1" ${CUSTODIAN_YAML}; \
