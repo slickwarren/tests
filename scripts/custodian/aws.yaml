@@ -12,7 +12,7 @@ policies:
       op: greater-than
   actions:
     - type: webhook
-      url: QA_IAM_WEBHOOK
+      url: "QAIAMWEBHOOK"
       batch: true
       body: |
         {
