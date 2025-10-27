@@ -76,7 +76,6 @@ node("vsphere-vpn-1") {
                 sh returnStdout: true, script: 'wget -qO ./jq https://github.com/jqlang/jq/releases/latest/download/jq-linux-amd64'
                 sh returnStdout:true, script: 'chmod a+x ./jq'
                 sh "docker build -t ${imageName} -f Dockerfile . --build-arg AWS_ACCESS_KEY_ID=\"${AWS_ACCESS_KEY_ID}\" \
-                --build-arg QA_IAM_WEBHOOK=\"${QA_IAM_WEBHOOK}\" \
                 --build-arg AWS_SECRET_ACCESS_KEY=\"${AWS_SECRET_ACCESS_KEY}\" --build-arg AZURE_AKS_SUBSCRIPTION_ID=\"${AZURE_AKS_SUBSCRIPTION_ID}\" \
                 --build-arg AZURE_TENANT_ID=\"${AZURE_TENANT_ID}\" --build-arg AZURE_CLIENT_ID=\"${AZURE_CLIENT_ID}\" \
                 --build-arg AZURE_CLIENT_SECRET=\"${AZURE_CLIENT_SECRET}\" --build-arg RANCHER_LINODE_ACCESSKEY=\"${RANCHER_LINODE_ACCESSKEY}\" \
@@ -89,7 +88,7 @@ node("vsphere-vpn-1") {
             stage('Run Docker Image for Adding Tags') {
               // if a user only wants to run the test using a subset of keys, they can pass in OVERRIDE_REGION
               if ("${env.OVERRIDE_REGION}" != "null" && "${env.OVERRIDE_REGION}" != "") {
-                sh "docker run --privileged --name ${testContainer} -e CUSTODIAN_YAML=\"tag-to-save.yaml\" -e OVERRIDE_REGION=\"${env.OVERRIDE_REGION}\" -e DONOTDELETE_KEYS=\"${DONOTDELETE_KEYS}\" -e USER_KEYS=\"${TAG_USER_KEYS}\" ${imageName} "
+                sh "docker run --privileged --name ${testContainer} -e CUSTODIAN_YAML=\"tag-to-save.yaml\" -e OVERRIDE_REGION=\"${env.OVERRIDE_REGION}\" -e DONOTDELETE_KEYS=\"${DONOTDELETE_KEYS}\" -e USER_KEYS=\"${TAG_USER_KEYS}\" -e QA_IAM_WEBHOOK=\"${QA_IAM_WEBHOOK}\" ${imageName} "
               } else {
                 echo "No OVERRIDE_REGION passed in, running all tests"
               }
