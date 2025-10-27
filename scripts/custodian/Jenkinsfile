@@ -40,6 +40,8 @@ node("vsphere-vpn-1") {
         string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY'),
 
         string(credentialsId: 'QA_IAM_WEBHOOK', variable: 'QA_IAM_WEBHOOK'),
+        string(credentialsId: 'SQS_URL', variable: 'SQS_URL'),
+        string(credentialsId: 'ARN_ROLE', variable: 'ARN_ROLE'),
 
         string(credentialsId: 'DONOTDELETE_KEYS', variable: 'DONOTDELETE_KEYS'),
         string(credentialsId: 'USER_KEYS', variable: 'USER_KEYS'),
@@ -75,11 +77,20 @@ node("vsphere-vpn-1") {
                 writeFile file: 'google_credentials.json', text: decoded
                 sh returnStdout: true, script: 'wget -qO ./jq https://github.com/jqlang/jq/releases/latest/download/jq-linux-amd64'
                 sh returnStdout:true, script: 'chmod a+x ./jq'
-                sh "docker build -t ${imageName} -f Dockerfile . --build-arg AWS_ACCESS_KEY_ID=\"${AWS_ACCESS_KEY_ID}\" \
-                --build-arg AWS_SECRET_ACCESS_KEY=\"${AWS_SECRET_ACCESS_KEY}\" --build-arg AZURE_AKS_SUBSCRIPTION_ID=\"${AZURE_AKS_SUBSCRIPTION_ID}\" \
-                --build-arg AZURE_TENANT_ID=\"${AZURE_TENANT_ID}\" --build-arg AZURE_CLIENT_ID=\"${AZURE_CLIENT_ID}\" \
-                --build-arg AZURE_CLIENT_SECRET=\"${AZURE_CLIENT_SECRET}\" --build-arg RANCHER_LINODE_ACCESSKEY=\"${RANCHER_LINODE_ACCESSKEY}\" \
-                --build-arg GOOGLE_CLOUD_PROJECT=\"${GOOGLE_CLOUD_PROJECT}\""
+                sh """
+docker build -t ${imageName} -f Dockerfile . \
+  --build-arg AWS_ACCESS_KEY_ID='${AWS_ACCESS_KEY_ID}' \
+  --build-arg AWS_SECRET_ACCESS_KEY='${AWS_SECRET_ACCESS_KEY}' \
+  --build-arg AZURE_AKS_SUBSCRIPTION_ID='${AZURE_AKS_SUBSCRIPTION_ID}' \
+  --build-arg AZURE_TENANT_ID='${AZURE_TENANT_ID}' \
+  --build-arg AZURE_CLIENT_ID='${AZURE_CLIENT_ID}' \
+  --build-arg AZURE_CLIENT_SECRET='${AZURE_CLIENT_SECRET}' \
+  --build-arg RANCHER_LINODE_ACCESSKEY='${RANCHER_LINODE_ACCESSKEY}' \
+  --build-arg GOOGLE_CLOUD_PROJECT='${GOOGLE_CLOUD_PROJECT}' \
+  --build-arg QA_IAM_WEBHOOK='${QA_IAM_WEBHOOK}' \
+  --build-arg SQS_URL='${SQS_URL}' \
+  --build-arg ARN_ROLE='${ARN_ROLE}'
+"""
               } catch (err) {
                 echo 'Docker Build had partial failures...'
                 echo "${err}"

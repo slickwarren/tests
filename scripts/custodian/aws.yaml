@@ -18,7 +18,7 @@ policies:
         - QAIAMWEBHOOK
       transport:
         type: sqs
-        queue: https://sqs.us-east-2.amazonaws.com/125601231307/ecm-qa-sqs
+        queue: SQSURL
 
   # - type: webhook
   #   url: QAIAMWEBHOOK

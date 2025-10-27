@@ -16,6 +16,11 @@ ENV AZURE_CLIENT_SECRET=$AZURE_CLIENT_SECRET
 ARG RANCHER_LINODE_ACCESSKEY
 ENV RANCHER_LINODE_CREDENTIAL=$RANCHER_LINODE_ACCESSKEY
 
+ARG SQS_URL
+ENV SQS_URL=$SQS_URL
+ARG ARN_ROLE
+ENV ARN_ROLE=$ARN_ROLE
+
 ENV TZ="America/New_York date"
 
 ARG OVERRIDE_REGION
@@ -51,11 +56,16 @@ RUN pip3 install c7n c7n_azure c7n_gcp c7n_mailer --break-system-packages
 RUN az login -u ${AZURE_CLIENT_ID} --service-principal -p ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID} > /dev/null
 RUN gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS > /dev/null
 
+RUN echo "queue_url: ${SQS_URL}" > mailer.yml
+RUN echo "role: ${ARN_ROLE}" >> mailer.yml
+
 CMD for i in `ls *.yaml`; \
     do cat $i | sed -e 's/USERKEYS/'"${USER_KEYS}"'/g' -i $i; done ; \
     echo $USER_KEYS; \
     for i in `ls *.yaml`; \
     do cat $i | sed -e 's/DONOTDELETEKEYS/'"${DONOTDELETE_KEYS}"'/g' -i $i; done; \
+    for i in `ls *.yaml`; \
+    do sed -i "s|SQSURL|${SQS_URL}|g" "$i"; done; \
     for i in `ls *.yaml`; \
     do sed -i "s|QAIAMWEBHOOK|${QA_IAM_WEBHOOK}|g" "$i"; done; \
     if [ "$CUSTODIAN_YAML" = "aws.yaml" ] || [ "$CUSTODIAN_YAML" = "untag-to-delete.yaml" ] ; then \
