@@ -19,6 +19,15 @@ policies:
       transport:
         type: sqs
         queue: SQSURL
+    - type: notify
+      template: default
+      priority_header: '2'
+      subject: testing the c7n mailer
+      to:
+        - caleb.warren@suse.com
+      transport:
+        type: sqs
+        queue: SQSURL
 
   # - type: webhook
   #   url: QAIAMWEBHOOK

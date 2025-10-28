@@ -58,6 +58,7 @@ RUN gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTI
 
 RUN echo "queue_url: ${SQS_URL}" > mailer.yml
 RUN echo "role: ${ARN_ROLE}" >> mailer.yml
+RUN echo "from_address: caleb.warren@suse.com" >> mailer.yml
 
 CMD for i in `ls *.yaml`; \
     do cat $i | sed -e 's/USERKEYS/'"${USER_KEYS}"'/g' -i $i; done ; \
