@@ -74,6 +74,7 @@ CMD for i in `ls *.yaml`; \
     custodian run --output-dir=. --region="us-east-1" ${CUSTODIAN_YAML}; \
     custodian run --output-dir=. --region="us-west-1" ${CUSTODIAN_YAML}; \
     custodian run --output-dir=. --region="us-west-2" ${CUSTODIAN_YAML}; \
+    c7n-mailer --config mailer.yml --run; \
     elif [ "$CUSTODIAN_YAML" = "tag-to-save.yaml" ] ; then \
     custodian run --output-dir=. --region=$OVERRIDE_REGION ${CUSTODIAN_YAML};  \
-    else custodian run --output-dir=. ${CUSTODIAN_YAML}; fi; 
+    else custodian run --output-dir=. ${CUSTODIAN_YAML}; fi;
