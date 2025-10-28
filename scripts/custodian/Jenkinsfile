@@ -90,7 +90,7 @@ node("vsphere-vpn-1") {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "{% for r in resources %}• {{ r.user_name }}\n{% endfor %}"
+        "text": "{% for r in resources %}• {{ r.user }}\n{% endfor %}"
       }
     }
   ]

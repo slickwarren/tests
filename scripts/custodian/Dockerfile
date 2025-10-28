@@ -60,8 +60,6 @@ RUN echo "queue_url: ${SQS_URL}" > mailer.yml
 RUN echo "role: ${ARN_ROLE}" >> mailer.yml
 RUN echo "region: us-east-2" >> mailer.yml
 RUN echo "from_address: caleb.warren@suse.com" >> mailer.yml
-RUN echo "templates_folders:" >> mailer.yml
-RUN echo "  - /usr/app/src" >> mailer.yml
 
 CMD for i in `ls *.yaml`; \
     do cat $i | sed -e 's/USERKEYS/'"${USER_KEYS}"'/g' -i $i; done ; \

@@ -1,17 +1,17 @@
 policies:
 - name: iam-qa-aws-key-too-old
   resource: iam-user
-  description: Find IAM users with any active access key older than 90 days.
   filters:
     - type: credential
-      key: access_keys
+      key: access_keys.active
+      value: true
+    - type: credential
+      key: access_keys.last_rotated
       value_type: age
       value: 90
       op: greater-than
-      expr: "active == true"
   actions:
     - type: notify
-      slack_template: slack
       slack_msg_color: danger
       to:
         - QAIAMWEBHOOK
@@ -19,7 +19,7 @@ policies:
         type: sqs
         queue: SQSURL
     - type: notify
-      template: slack
+      template: default
       priority_header: '2'
       subject: testing the c7n mailer
       to:
