@@ -20,6 +20,8 @@ ARG SQS_URL
 ENV SQS_URL=$SQS_URL
 ARG ARN_ROLE
 ENV ARN_ROLE=$ARN_ROLE
+ARG QA_IAM_WEBHOOK
+ENV QA_IAM_WEBHOOK=$QA_IAM_WEBHOOK
 
 ENV TZ="America/New_York date"
 
@@ -30,8 +32,6 @@ ARG USER_KEYS
 ENV USER_KEYS=$USER_KEYS
 ARG DONOTDELETE_KEYS
 ENV DONOTDELETE_KEYS=$DONOTDELETE_KEYS
-ARG QA_IAM_WEBHOOK
-ENV QA_IAM_WEBHOOK=$QA_IAM_WEBHOOK
 
 
 ENV CUSTODIAN_YAML=aws.yaml
@@ -60,6 +60,8 @@ RUN echo "queue_url: ${SQS_URL}" > mailer.yml
 RUN echo "role: ${ARN_ROLE}" >> mailer.yml
 RUN echo "region: us-east-2" >> mailer.yml
 RUN echo "from_address: caleb.warren@suse.com" >> mailer.yml
+RUN echo "templates_folders:" >> mailer.yml
+RUN echo "  - /usr/app/src" >> mailer.yml
 
 CMD for i in `ls *.yaml`; \
     do cat $i | sed -e 's/USERKEYS/'"${USER_KEYS}"'/g' -i $i; done ; \
