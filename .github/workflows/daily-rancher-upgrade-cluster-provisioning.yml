@@ -311,14 +311,6 @@ jobs:
           QASE_PROJECT_ID: ${{ secrets.HB_QASE_PROJECT_ID }}
         uses: ./.github/actions/run-hostbusters-daily-provisioning
 
-      - name: Reporting Results to Slack
-        if: always()
-        uses: ./.github/actions/report-to-slack
-        with:
-          job-status: ${{ job.status }}
-          slack-channel: ${{ secrets.HB_SLACK_CHANNEL }}
-          slack-webhook-url: ${{ secrets.HB_SLACK_WEBHOOK_URL }}
-
       - name: Cleanup Infrastructure
         if: always()
         working-directory: tfp-automation/modules/sanity/aws
@@ -337,6 +329,19 @@ jobs:
         with:
           prefix-list-id: ${{ secrets.AWS_MANAGED_PREFIX_LIST_ID }}
           region: "${{ secrets.AWS_REGION }}"
+
+      - name: Set job status output
+        if: always()
+        run: echo "job_status=${{ job.status }}" >> $GITHUB_OUTPUT
+        id: set-job-status
+
+      - name: Reporting Results to Slack
+        if: always()
+        uses: ./.github/actions/report-to-slack
+        with:
+          job-status: ${{ steps.set-job-status.outputs.job_status }}
+          slack-channel: ${{ secrets.SLACK_CHANNEL }}
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   v2-12:
     if: |
@@ -615,14 +620,6 @@ jobs:
           QASE_PROJECT_ID: ${{ secrets.HB_QASE_PROJECT_ID }}
         uses: ./.github/actions/run-hostbusters-daily-provisioning
 
-      - name: Reporting Results to Slack
-        if: always()
-        uses: ./.github/actions/report-to-slack
-        with:
-          job-status: ${{ job.status }}
-          slack-channel: ${{ secrets.HB_SLACK_CHANNEL }}
-          slack-webhook-url: ${{ secrets.HB_SLACK_WEBHOOK_URL }}
-
       - name: Cleanup Infrastructure
         if: always()
         working-directory: tfp-automation/modules/sanity/aws
@@ -641,6 +638,19 @@ jobs:
         with:
           prefix-list-id: ${{ secrets.AWS_MANAGED_PREFIX_LIST_ID }}
           region: "${{ secrets.AWS_REGION }}"
+
+      - name: Set job status output
+        if: always()
+        run: echo "job_status=${{ job.status }}" >> $GITHUB_OUTPUT
+        id: set-job-status
+
+      - name: Reporting Results to Slack
+        if: always()
+        uses: ./.github/actions/report-to-slack
+        with:
+          job-status: ${{ steps.set-job-status.outputs.job_status }}
+          slack-channel: ${{ secrets.SLACK_CHANNEL }}
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   v2-11:
     if: |
@@ -918,14 +928,6 @@ jobs:
           QASE_PROJECT_ID: ${{ secrets.HB_QASE_PROJECT_ID }}
         uses: ./.github/actions/run-hostbusters-daily-provisioning
 
-      - name: Reporting Results to Slack
-        if: always()
-        uses: ./.github/actions/report-to-slack
-        with:
-          job-status: ${{ job.status }}
-          slack-channel: ${{ secrets.HB_SLACK_CHANNEL }}
-          slack-webhook-url: ${{ secrets.HB_SLACK_WEBHOOK_URL }}
-
       - name: Cleanup Infrastructure
         if: always()
         working-directory: tfp-automation/modules/sanity/aws
@@ -944,3 +946,16 @@ jobs:
         with:
           prefix-list-id: ${{ secrets.AWS_MANAGED_PREFIX_LIST_ID_PRIME }}
           region: "${{ secrets.AWS_REGION }}"
+
+      - name: Set job status output
+        if: always()
+        run: echo "job_status=${{ job.status }}" >> $GITHUB_OUTPUT
+        id: set-job-status
+
+      - name: Reporting Results to Slack
+        if: always()
+        uses: ./.github/actions/report-to-slack
+        with:
+          job-status: ${{ steps.set-job-status.outputs.job_status }}
+          slack-channel: ${{ secrets.SLACK_CHANNEL }}
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
