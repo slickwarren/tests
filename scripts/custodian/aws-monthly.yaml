@@ -20,3 +20,12 @@ policies:
       transport:
         type: sqs
         queue: SQSURL
+    - type: notify
+      template: aws-iam-email-template
+      priority_header: '2'
+      subject: AWS Rancher QA Org -- Access Key Policy Violations
+      to:
+        - caleb.warren@suse.com
+      transport:
+        type: sqs
+        queue: SQSURL
