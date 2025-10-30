@@ -61,23 +61,21 @@ RUN echo "role: ${ARN_ROLE}" >> mailer.yml
 RUN echo "region: us-east-2" >> mailer.yml
 RUN echo "from_address: caleb.warren@suse.com" >> mailer.yml
 
-CMD for i in `ls *.yaml`; \
-    do cat $i | sed -e 's/USERKEYS/'"${USER_KEYS}"'/g' -i $i; done ; \
-    echo $USER_KEYS; \
-    for i in `ls *.yaml`; \
-    do cat $i | sed -e 's/DONOTDELETEKEYS/'"${DONOTDELETE_KEYS}"'/g' -i $i; done; \
-    for i in `ls *.yaml`; \
-    do sed -i "s|SQSURL|${SQS_URL}|g" "$i"; done; \
-    for i in `ls *.yaml`; \
-    do sed -i "s|QAIAMWEBHOOK|${QA_IAM_WEBHOOK}|g" "$i"; done; \
-    if [ "$CUSTODIAN_YAML" = "aws.yaml" ] || [ "$CUSTODIAN_YAML" = "untag-to-delete.yaml" ] ; then \
-    custodian run --output-dir=. --region="us-east-2" ${CUSTODIAN_YAML}; \
-    custodian run --output-dir=. --region="us-east-1" ${CUSTODIAN_YAML}; \
-    custodian run --output-dir=. --region="us-west-1" ${CUSTODIAN_YAML}; \
-    custodian run --output-dir=. --region="us-west-2" ${CUSTODIAN_YAML}; \
-    # some resources like IAM are across all regions for an org. Split out to only run once.
-    custodian run --output-dir=. --region="us-east-2" "aws-single-region.yaml"; \
-    c7n-mailer --config mailer.yml --run; \
-    elif [ "$CUSTODIAN_YAML" = "tag-to-save.yaml" ] ; then \
-    custodian run --output-dir=. --region=$OVERRIDE_REGION ${CUSTODIAN_YAML};  \
-    else custodian run --output-dir=. ${CUSTODIAN_YAML}; fi;
+CMD set -e; \
+    for i in *.yaml; do \
+        sed -i "s/USERKEYS/${USER_KEYS}/g" "$i"; \
+        sed -i "s/DONOTDELETEKEYS/${DONOTDELETE_KEYS}/g" "$i"; \
+        sed -i "s|SQSURL|${SQS_URL}|g" "$i"; \
+        sed -i "s|QAIAMWEBHOOK|${QA_IAM_WEBHOOK}|g" "$i"; \
+    done; \
+    echo "Using USER_KEYS=${USER_KEYS}"; \
+    if [ "$CUSTODIAN_YAML" = "aws.yaml" ] || [ "$CUSTODIAN_YAML" = "untag-to-delete.yaml" ]; then \
+        for region in us-east-2 us-east-1 us-west-1 us-west-2; do \
+            custodian run --output-dir=. --region="$region" "$CUSTODIAN_YAML"; \
+        done; \
+    elif [ "$CUSTODIAN_YAML" = "tag-to-save.yaml" ] || [ "$CUSTODIAN_YAML" = "aws-monthly.yaml" ]; then \
+        custodian run --output-dir=. --region="$OVERRIDE_REGION" "$CUSTODIAN_YAML"; \
+    else \
+        custodian run --output-dir=. "$CUSTODIAN_YAML"; \
+    fi; \
+    c7n-mailer --config mailer.yml --run
