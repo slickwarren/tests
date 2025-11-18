@@ -6,13 +6,14 @@ set -e
 trap 'rm -rf provider-clone' EXIT
 
 # Validate user input
-if [ $# -ne 2 ]; then
+if [ $# -ne 3 ]; then
   echo "Usage: $0 <provider> <giturl>"
   exit 1
 fi
 
 PROVIDER=$1
 GITURL=$2
+BRANCH=${3:-master}
 VERSION="0.0.0-dev"
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -28,8 +29,14 @@ fi
 DIR=~/.terraform.d/plugins/terraform.local/${PROVIDER}/${PROVIDER}/${VERSION}/${PLATFORM}
 (umask u=rwx,g=rwx,o=rwx && mkdir -p $DIR)
 
+rm -rf provider-clone
+
 git clone $GITURL provider-clone
+
 cd provider-clone
+git fetch --all
+git checkout $BRANCH
+
 go build -o terraform-provider-${PROVIDER} && \
 cp terraform-provider-${PROVIDER} $DIR
 

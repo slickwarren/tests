@@ -117,6 +117,10 @@ if [ $? -ne 0 ]; then
     echo "Error: Terraform apply failed."
     exit 1
 fi
+if [[ "$TERRAFORM_DIR" == *"harvester"* ]]; then
+    sleep 80
+    tofu -chdir="$TERRAFORM_DIR" refresh -var-file="$TFVARS_FILE"
+fi
 
 envsubst < "$TERRAFORM_TEMPLATE" > "$TERRAFORM_INVENTORY"
 
