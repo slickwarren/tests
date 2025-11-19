@@ -118,11 +118,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 if [[ "$TERRAFORM_DIR" == *"harvester"* ]]; then
-    sleep 80
+    sleep 120
     tofu -chdir="$TERRAFORM_DIR" refresh -var-file="$TFVARS_FILE"
 fi
 
 envsubst < "$TERRAFORM_TEMPLATE" > "$TERRAFORM_INVENTORY"
+
+ansible-inventory -i "$RKE2_INVENTORY" --graph --vars
 
 # --- RKE2 Playbook ---
 
