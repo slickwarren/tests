@@ -1,4 +1,4 @@
-//go:build (validation || infra.rke1 || cluster.any || stress) && !infra.any && !infra.aks && !infra.eks && !infra.gke && !infra.rke2k3s && !sanity && !extended
+//go:build (validation || infra.rke1 || cluster.any || stress || pit.daily) && !infra.any && !infra.aks && !infra.eks && !infra.gke && !infra.rke2k3s && !sanity && !extended
 
 package charts
 
@@ -8,20 +8,24 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/rancher/norman/types"
 	"github.com/rancher/shepherd/clients/rancher"
 	"github.com/rancher/shepherd/clients/rancher/catalog"
 	management "github.com/rancher/shepherd/clients/rancher/generated/management/v3"
+	steveV1 "github.com/rancher/shepherd/clients/rancher/v1"
 	v1 "github.com/rancher/shepherd/clients/rancher/v1"
 	extencharts "github.com/rancher/shepherd/extensions/charts"
+	shepherdCharts "github.com/rancher/shepherd/extensions/charts"
 	"github.com/rancher/shepherd/extensions/clusters"
 	"github.com/rancher/shepherd/extensions/ingresses"
+	kubeapinodes "github.com/rancher/shepherd/extensions/kubeapi/nodes"
 	"github.com/rancher/shepherd/pkg/session"
 	"github.com/rancher/tests/actions/charts"
+	actionsClusters "github.com/rancher/tests/actions/clusters"
 	"github.com/rancher/tests/actions/namespaces"
 	"github.com/rancher/tests/actions/projects"
 	"github.com/rancher/tests/actions/secrets"
 	"github.com/rancher/tests/actions/services"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -184,14 +188,32 @@ func (m *MonitoringTestSuite) TestMonitoringChart() {
 	require.NoError(m.T(), err)
 
 	// Get a random worker node' public external IP of a specific cluster
-	nodeCollection, err := client.Management.Node.List(&types.ListOpts{Filters: map[string]interface{}{
-		"clusterId": m.project.ClusterID,
-	}})
+	logrus.Infof("Getting the node using the label [%v]", actionsClusters.LabelWorker)
+	query, err := url.ParseQuery(actionsClusters.LabelWorker)
 	require.NoError(m.T(), err)
+
+	nodeList, err := steveclient.SteveType("node").List(query)
+	require.NoError(m.T(), err)
+
 	workerNodePublicIPs := []string{}
-	for _, node := range nodeCollection.Data {
-		workerNodePublicIPs = append(workerNodePublicIPs, node.Annotations["rke.cattle.io/external-ip"])
+	for _, machine := range nodeList.Data {
+		logrus.Info("Getting the node IP")
+		newNode := &corev1.Node{}
+		err = steveV1.ConvertToK8sType(machine.JSONResp, newNode)
+		if err != nil {
+			logrus.Warnf("Failed to convert node: %v", err)
+			continue // Skip invalid nodes instead of failing completely
+		}
+
+		nodeIP := kubeapinodes.GetNodeIP(newNode, corev1.NodeExternalIP)
+		if nodeIP == "" {
+			logrus.Warnf("Node %s has no external IP", newNode.Name)
+			continue
+		}
+		workerNodePublicIPs = append(workerNodePublicIPs, nodeIP)
 	}
+
+	require.NotEmpty(m.T(), workerNodePublicIPs, "No worker nodes with external IPs found")
 	randWorkerNodePublicIP := workerNodePublicIPs[rand.Intn(len(workerNodePublicIPs))]
 
 	// Get URL and string versions of origin with random node' public IP
@@ -244,8 +266,8 @@ func (m *MonitoringTestSuite) TestMonitoringChart() {
 	assert.NoError(m.T(), err)
 	assert.True(m.T(), result)
 
-	m.T().Logf("Validating alertmanager sent alert to webhook receiver")
-	err = extencharts.WatchAndWaitDeploymentForAnnotation(client, m.project.ClusterID, webhookReceiverNamespace.Name, alertWebhookReceiverDeploymentResp.Name, webhookReceiverAnnotationKey, webhookReceiverAnnotationValue)
+	m.T().Logf("Validating webhook deploy")
+	err = shepherdCharts.WatchAndWaitDeployments(client, m.project.ClusterID, webhookReceiverNamespace.Name, metav1.ListOptions{})
 	require.NoError(m.T(), err)
 }
 

@@ -1,0 +1,220 @@
+- projects: [RANCHERINT]
+  suite: Charts
+  cases:
+  - title: "CIS Benchmark Chart Installation and Scan"
+    description: "Verify CIS Benchmark chart installation and successful execution of CIS scan"
+    automation: 2
+    steps:
+    - action: "Config a downstream cluster running in rancher"
+      data: ""
+      expectedresult: "A downstream cluster is active and ready to receive workloads"
+      position: 1
+    - action: "Create Project"
+      data: "Project name: System"
+      expectedresult: "The 'System' project is successfully created"
+      position: 2
+    - action: "Install CIS Benchmark chart"
+      data: "helm install rancher-cis-benchmark ./ --create-namespace -n cis-operator-system"
+      expectedresult: "CIS Benchmark chart installs successfully"
+      position: 3
+    - action: "Run CIS benchmark scan"
+      data: "Profile name: cis-1.11-profile"
+      expectedresult: "CIS scan completes successfully"
+      position: 4
+    custom_field:
+      "15": "TestCISBenchmarkInstallation"
+  - title: "Rancher Alerting Chart Installation"
+    description: "Verify Rancher Alerting chart installs successfully"
+    automation: 2
+    steps:
+    - action: "Config a downstream cluster running in rancher"
+      data: ""
+      expectedresult: "A downstream cluster is active and ready to receive workloads"
+      position: 1
+    - action: "Create Project"
+      data: "Project name: System"
+      expectedresult: "The 'System' project is successfully created"
+      position: 2
+    - action: "Install Rancher Alerting chart"
+      data: "helm install rancher-alerting-drivers --namespace=default"
+      expectedresult: "Alerting chart installation starts successfully"
+      position: 3
+    - action: "Wait for Alerting deployments"
+      expectedresult: "All alerting deployments are Ready state"
+      position: 4
+    custom_field:
+      "15": "TestAlertingInstallation"
+  - title: "Rancher Logging Chart Installation"
+    description: "Verify Rancher Logging chart installs successfully"
+    automation: 2
+    steps:
+    - action: "Config a downstream cluster running in rancher"
+      data: ""
+      expectedresult: "A downstream cluster is active and ready to receive workloads"
+      position: 1
+    - action: "Create Project"
+      data: "Project name: System"
+      expectedresult: "The 'System' project is successfully created"
+      position: 2
+    - action: "Install Rancher Logging chart"
+      data: "helm install --generate-name --wait oci://ghcr.io/kube-logging/helm-charts/logging-operator"
+      expectedresult: "Logging chart installs successfully"
+      position: 3
+    - action: "Wait for Logging deployments"
+      data: ""
+      expectedresult: "All logging deployments reach Ready state"
+      position: 4
+    custom_field:
+      "15": "TestLoggingInstallation"
+  - title: "Test NeuVector chart installation"
+    description: "Validate that the NeuVector chart and its dependent components are successfully installed and become ready on the target cluster"
+    automation: 2
+    steps:
+    - action: "Create Rancher client session"
+      data: "Initialize Rancher client and test session"
+      expectedresult: "Rancher client initialized successfully"
+      position: 1
+    - action: "Validate target cluster configuration"
+      data: "Retrieve cluster name from Rancher configuration"
+      expectedresult: "Cluster name is set and cluster metadata retrieved"
+      position: 2
+    - action: "Retrieve system project"
+      data: "Get System project from the cluster"
+      expectedresult: "System project found successfully"
+      position: 3
+    - action: "Fetch latest NeuVector chart version"
+      data: "Query Rancher chart repository for latest NeuVector version"
+      expectedresult: "Latest NeuVector chart version retrieved"
+      position: 4
+    - action: "Prepare NeuVector install payload"
+      data: "Namespace: neuvector-system, Project: System, Version: latest"
+      expectedresult: "Install payload prepared successfully"
+      position: 5
+    - action: "Install NeuVector charts"
+      data: "Install neuvector, neuvector-monitor, and neuvector-crd charts"
+      expectedresult: "All NeuVector charts installed successfully"
+      position: 6
+    - action: "Wait for neuvector, neuvector-monitor, and neuvector-crd charts installations to complete"
+      expectedresult: "Charts reports successful installations"
+      position: 7
+    - action: "Verify NeuVector deployments readiness"
+      data: "Watch and wait for all deployments in neuvector-system namespace"
+      expectedresult: "All NeuVector deployments are in Ready state"
+      position: 8
+    - action: "Verify NeuVector daemonsets readiness"
+      data: "Watch and wait for all daemonsets in neuvector-system namespace"
+      expectedresult: "All NeuVector daemonsets are in Ready state"
+      position: 9
+    custom_field:
+      "15": "TestNeuVectorInstallation"
+  - title: "Rancher Monitoring Chart Installation"
+    description: "Validate that Monitoring chart can be installed"
+    automation: 2
+    steps:
+    - action: "Config a downstream cluster running in rancher"
+      data: ""
+      expectedresult: "A downstream cluster is active and ready to receive workloads"
+      position: 1
+    - action: "Create Project"
+      data: "Project name: System"
+      expectedresult: "The 'System' project is successfully created"
+      position: 2
+    - action: "Install Rancher Monitoring chart"
+      expectedresult: "Monitoring chart installs successfully"
+      position: 3
+    - action: "Verify Prometheus, Grafana, and Alertmanager access"
+      data: ""
+      expectedresult: "All monitoring endpoints are accessible"
+      position: 4
+    - action: "Verify Prometheus targets are healthy"
+      data: ""
+      expectedresult: "All Prometheus targets are up"
+      position: 5
+    - action: "Configure alert webhook receiver"
+      data: ""
+      expectedresult: "Webhook receiver deployment is created and ready"
+      position: 6
+    custom_field:
+      "15": "TestMonitoringChart"
+  - title: "Rancher Monitoring Chart Upgrade"
+    description: "Verify Rancher Monitoring chart upgrade from previous version to latest"
+    automation: 2
+    steps:
+    - action: "Config a downstream cluster running in rancher"
+      data: ""
+      expectedresult: "A downstream cluster is active and ready to receive workloads"
+      position: 1
+    - action: "Create Project"
+      data: "Project name: System"
+      expectedresult: "The 'System' project is successfully created"
+      position: 2
+    - action: "Install monitoring chart with previous version"
+      data: ""
+      expectedresult: "Monitoring chart is installed with non-latest version"
+      position: 3
+    - action: "Upgrade monitoring chart to latest version"
+      data: ""
+      expectedresult: "Monitoring chart upgrade completes successfully"
+      position: 4
+    custom_field:
+      "15": "TestUpgradeMonitoringChart"
+  - title: "Istio Chart Installation and Application Validation"
+    description: "Verify Istio chart installation, example application deployment, and ingress accessibility"
+    automation: 2
+    steps:
+    - action: "Config a downstream cluster running in rancher"
+      data: ""
+      expectedresult: "A downstream cluster is active and ready to receive workloads"
+      position: 1
+    - action: "Install Monitoring chart if not present"
+      data: ""
+      expectedresult: "Monitoring chart is installed and healthy"
+      position: 2
+    - action: "Install Istio chart with ingress, telemetry, and observability enabled"
+      data: ""
+      expectedresult: "Istio chart installs successfully"
+      position: 3
+    - action: "Create namespace"
+      data: ""
+      expectedresult: "Namespace is created"
+      position: 4
+    - action: "Deploy Istio example application"
+      data: ""
+      expectedresult: "Example application deployments become ready"
+      position: 5
+    - action: "Verify Kiali and Jaeger endpoints"
+      data: ""
+      expectedresult: "Kiali and Jaeger are externally accessible"
+      position: 6
+    - action: "Verify example application ingress"
+      data: ""
+      expectedresult: "Application endpoint is accessible and returns expected content"
+      position: 7
+    custom_field:
+      "15": "TestIstioChart"
+  - title: "Istio Chart Upgrade"
+    description: "Verify Istio chart can be upgraded from a previous version to the latest version"
+    automation: 2
+    steps:
+    - action: "Config a downstream cluster running in rancher"
+      data: ""
+      expectedresult: "A downstream cluster is active and ready to receive workloads"
+      position: 1
+    - action: "Install Istio chart using previous version"
+      data: ""
+      expectedresult: "Istio is installed with a non-latest version"
+      position: 2
+    - action: "Verify Istio deployment versions"
+      data: ""
+      expectedresult: "Istio deployments use the expected versions"
+      position: 3
+    - action: "Upgrade Istio chart to latest version"
+      data: ""
+      expectedresult: "Istio chart upgrade completes successfully"
+      position: 4
+    - action: "Verify Istio deployment versions after upgrade"
+      data: ""
+      expectedresult: "Deployments reflect the upgraded Istio version"
+      position: 5
+    custom_field:
+      "15": "TestUpgradeIstioChart"

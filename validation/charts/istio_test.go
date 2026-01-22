@@ -1,4 +1,4 @@
-//go:build (validation || infra.rke1 || cluster.any || stress) && !infra.any && !infra.aks && !infra.eks && !infra.gke && !infra.rke2k3s && !sanity && !extended
+//go:build (validation || infra.rke1 || cluster.any || stress || pit.daily) && !infra.any && !infra.aks && !infra.eks && !infra.gke && !infra.rke2k3s && !sanity && !extended
 
 package charts
 
@@ -85,6 +85,10 @@ func (i *IstioTestSuite) SetupSuite() {
 	require.NoError(i.T(), err)
 	require.Equal(i.T(), createdProject.Name, exampleAppProjectName)
 	i.project = createdProject
+
+	i.T().Logf("Creating %s namespace", charts.RancherIstioNamespace)
+	_, err = namespaces.CreateNamespace(client, charts.RancherIstioNamespace, "{}", map[string]string{}, map[string]string{}, i.project)
+	require.NoError(i.T(), err)
 
 	i.chartInstallOptions = &chartInstallOptions{
 		monitoring: &charts.InstallOptions{
