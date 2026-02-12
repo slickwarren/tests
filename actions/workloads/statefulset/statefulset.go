@@ -14,7 +14,7 @@ import (
 )
 
 // CreateStatefulset is a helper to create a statefulset using wrangler context.
-// If storageClass is provided, a volume template with the indicated storage class and 5Gi of storage will
+// If storageClass is provided, a volume template with the indicated storage class and 1Gi of storage will
 // be included in the StetefulSet spec.
 func CreateStatefulSet(client *rancher.Client, clusterID, namespaceName string, podTemplate corev1.PodTemplateSpec, replicas int32, watchStatefulset bool, storageClassName string) (*appv1.StatefulSet, error) {
 	wranglerContext, err := clusterapi.GetClusterWranglerContext(client, clusterID)
@@ -37,7 +37,7 @@ func CreateStatefulSet(client *rancher.Client, clusterID, namespaceName string, 
 				StorageClassName: &storageClassName,
 				Resources: corev1.VolumeResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("5Gi"),
+						corev1.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
 			},
