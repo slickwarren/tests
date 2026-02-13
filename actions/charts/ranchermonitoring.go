@@ -11,8 +11,10 @@ import (
 	"github.com/rancher/shepherd/clients/rancher/catalog"
 	"github.com/rancher/shepherd/extensions/clusters"
 	"github.com/rancher/shepherd/extensions/defaults"
+	"github.com/rancher/shepherd/extensions/kubectl"
 	"github.com/rancher/shepherd/pkg/api/steve/catalog/types"
 	"github.com/rancher/shepherd/pkg/wait"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 )
@@ -328,4 +330,23 @@ func addMonitoringProviderPrefix(provider clusters.KubernetesProvider, opts *Ran
 	}
 
 	return newOptsMap, nil
+}
+
+// DeleteMonitoringResources follows the Monitoring uninstall reference guide
+// and deletes the ValidatingWebhookConfiguration to avoid installation conflicts
+// Doc: There is no documentation available as a reference, but the information is described in the chart
+func DeleteMonitoringResources(client *rancher.Client, clusterID string) (string, error) {
+	logrus.Infof("Deleting Monitoring resources")
+	deleteCommand := []string{
+		"sh", "-c",
+		fmt.Sprintf("%s && %s && %s && %s",
+			"kubectl get crds -oname | grep 'monitoring.coreos.com' | xargs -r kubectl delete",
+			"kubectl delete mutatingwebhookconfiguration rancher-monitoring-admission",
+			"kubectl delete validatingwebhookconfiguration rancher-monitoring-admission",
+			"kubectl delete apiservices v1beta1.custom.metrics.k8s.io"),
+	}
+
+	log, err := kubectl.Command(client, nil, clusterID, deleteCommand, "2MB")
+	logrus.Infof("Delete Monitoring command: %s", log)
+	return log, err
 }

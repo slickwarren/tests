@@ -70,7 +70,7 @@ func (i *IstioTestSuite) SetupSuite() {
 }
 
 func (i *IstioTestSuite) TearDownTest() {
-	_, err := deleteResources(i.client, i.cluster.ID)
+	_, err := charts.DeleteIstioResources(i.client, i.cluster.ID)
 	require.NoError(i.T(), err)
 	i.session.Cleanup()
 }
