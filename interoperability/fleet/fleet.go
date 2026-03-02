@@ -2,6 +2,8 @@ package fleet
 
 import (
 	"errors"
+	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	steveV1 "github.com/rancher/shepherd/clients/rancher/v1"
 	"github.com/sirupsen/logrus"
 
+	"github.com/rancher/shepherd/extensions/defaults/stevetypes"
 	extensionsfleet "github.com/rancher/shepherd/extensions/fleet"
 	"github.com/rancher/shepherd/extensions/workloads/pods"
 	"github.com/rancher/shepherd/pkg/config"
@@ -25,8 +28,8 @@ const (
 	HarvesterName                     = "harvester"
 	ExampleRepo                       = "https://github.com/rancher/fleet-examples"
 	BranchName                        = "master"
-	MatchKey                          = "provider.cattle.io"
-	MatchOperator                     = "NotIn"
+	ProviderMatchKey                  = "provider.cattle.io"
+	NotInMatchOperator                = "NotIn"
 	FleetMetaName                     = "automatedrepo-"
 	Namespace                         = "fleet-default"
 	GitRepoPathLinux                  = "simple"
@@ -60,12 +63,8 @@ func VerifyGitRepo(client *rancher.Client, gitRepoID, k8sClusterID, steveCluster
 		Steps:    20,
 	}
 
+	logrus.Info("Wait for GitRepo to deploy on cluster" + steveClusterID)
 	err := kwait.ExponentialBackoff(backoff, func() (finished bool, err error) {
-		client, err = client.ReLogin()
-		if err != nil {
-			return false, err
-		}
-
 		// after checking clusterStatus, check gitRepoStatus. gitRepoStatus starts in a healthy state,
 		// so if errors come up during clusterBundle deployments, its status will update to a negative / error state
 		gitRepo, err := client.Steve.SteveType(extensionsfleet.FleetGitRepoResourceType).ByID(gitRepoID)
@@ -97,13 +96,8 @@ func VerifyGitRepo(client *rancher.Client, gitRepoID, k8sClusterID, steveCluster
 		return err
 	}
 
-	logrus.Info("waiting for bundles to deploy to ", steveClusterID)
+	logrus.Info("Waiting for bundles to deploy to ", steveClusterID)
 	err = kwait.ExponentialBackoff(backoff, func() (finished bool, err error) {
-		client, err = client.ReLogin()
-		if err != nil {
-			return false, err
-		}
-
 		cluster, err := client.Steve.SteveType(FleetClusterResourceType).ByID(steveClusterID)
 		if err != nil {
 			return false, err
@@ -157,11 +151,52 @@ func VerifyGitRepo(client *rancher.Client, gitRepoID, k8sClusterID, steveCluster
 	podErrors := pods.StatusPods(client, k8sClusterID)
 	if len(podErrors) > 0 {
 		for _, err := range podErrors {
-			logrus.Errorf(err.Error())
+			logrus.Error(err.Error())
 		}
 		return errors.New("pods are not healthy in " + steveClusterID)
 	}
 	return err
+}
+
+// AddWindowsPathsToGitRepo adds paths to a Fleet GitRepo when needed, considering the presence of windows nodes on the target cluster.
+func AddWindowsPathsToGitRepo(client *rancher.Client, clusterID string, fleetGitRepo *v1alpha1.GitRepo) (bool, error) {
+	urlQuery, err := url.ParseQuery(fmt.Sprintf("labelSelector=%s!=%s", "cattle.io/os", "linux"))
+	if err != nil {
+		return false, err
+	}
+
+	steveClient, err := client.Steve.ProxyDownstream(clusterID)
+	if err != nil {
+		return false, err
+	}
+
+	winsNodeList, err := steveClient.SteveType(stevetypes.Node).List(urlQuery)
+	if err != nil {
+		return false, err
+	}
+
+	usingWindowsVersion := false
+	if len(winsNodeList.Data) > 0 {
+		urlQuery, err = url.ParseQuery(fmt.Sprintf("labelSelector=%s=%s", "kubernetes.io/os", "linux"))
+		if err != nil {
+			return false, err
+		}
+
+		linuxNodeList, err := steveClient.SteveType(stevetypes.Node).List(urlQuery)
+		if err != nil {
+			return false, err
+		}
+
+		if len(winsNodeList.Data) < len(linuxNodeList.Data) {
+			usingWindowsVersion = true
+		}
+	}
+
+	if usingWindowsVersion {
+		fleetGitRepo.Spec.Paths = []string{GitRepoPathWindows}
+	}
+
+	return usingWindowsVersion, nil
 }
 
 // GetDeploymentVersion is a helper that gets the image version from a deployment ID in a given cluster.
