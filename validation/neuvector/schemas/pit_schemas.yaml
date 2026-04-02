@@ -1,0 +1,21 @@
+- projects: [RANCHERINT]
+  suite: charts
+  cases:
+  - title: "NeuVector Chart Installation on Hardened Cluster"
+    description: "Validate that the NeuVector chart can be installed on a hardened cluster and all components become ready, including UI accessibility via service proxy"
+    automation: 2
+    steps:
+    - action: "Create Rancher"
+      data: ""
+      expectedresult: ""
+      position: 1
+    - action: "Deploy a hardened downstream cluster"
+      data: "Uses qaInfraAutomation to deploy a cluster, see interoperability/qaInfraAutomation/README.md for config info"
+      expectedresult: ""
+      position: 2
+    - action: "Deploy a Neuvector with Hardened config values on the downstream cluster"
+      data: "/validation/fleet/schemas/gitrepo.yaml"
+      expectedresult: "Neuvector is installable and UI is reachable on the hardened cluster"
+      position: 3
+    custom_field:
+      "15": "TestNeuVectorHardenedTestSuite/TestNeuVectorInstallation"
