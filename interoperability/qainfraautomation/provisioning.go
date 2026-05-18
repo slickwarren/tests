@@ -50,12 +50,10 @@ const (
 	rancherClusterModulePath       = "tofu/rancher/cluster"
 	customClusterPlaybook          = "ansible/rancher/downstream/custom_cluster/custom-cluster-playbook.yml"
 	customClusterInventoryTemplate = "ansible/rancher/downstream/custom_cluster/inventory-template.yml"
-	rke2Playbook                   = "ansible/rke2/default/rke2-playbook.yml"
-	rke2InventoryTemplate          = "ansible/rke2/default/inventory-template.yml"
-	rke2VarsFile                   = "ansible/rke2/default/vars.yaml"
-	k3sPlaybook                    = "ansible/k3s/default/k3s-playbook.yml"
-	k3sInventoryTemplate           = "ansible/k3s/default/inventory-template.yml"
-	k3sVarsFile                    = "ansible/k3s/default/vars.yaml"
+	rke2Playbook  = "ansible/rke2/default/rke2-playbook.yml"
+	rke2VarsFile  = "ansible/rke2/default/vars.yaml"
+	k3sPlaybook   = "ansible/k3s/default/k3s-playbook.yml"
+	k3sVarsFile   = "ansible/k3s/default/vars.yaml"
 	awsClusterNodesModulePath      = "tofu/aws/modules/cluster_nodes"
 	fleetDefaultNamespace          = "fleet-default"
 	rancherInstallPlaybook         = "ansible/rancher/default-ha/rancher-playbook.yml"
@@ -673,15 +671,13 @@ func provisionHarvesterStandaloneCluster(
 		t.Fatalf("derive public key from %q: %v", privKeyPath, err)
 	}
 
-	var playbookPath, inventoryTemplate, varsFile string
+	var playbookPath, varsFile string
 	switch clusterType {
 	case "rke2":
 		playbookPath = rke2Playbook
-		inventoryTemplate = rke2InventoryTemplate
 		varsFile = rke2VarsFile
 	case "k3s":
 		playbookPath = k3sPlaybook
-		inventoryTemplate = k3sInventoryTemplate
 		varsFile = k3sVarsFile
 	default:
 		t.Fatalf("unsupported cluster type: %s (must be rke2 or k3s)", clusterType)
@@ -722,11 +718,12 @@ func provisionHarvesterStandaloneCluster(
 	}
 
 	ansibleClient := ansible.NewClient(repoPath)
-	inventoryEnv := map[string]string{
-		"TERRAFORM_NODE_SOURCE": harvesterVMModulePath,
-		"TF_WORKSPACE":          workspace,
+
+	clusterNodesJSON, err := vmTofu.Output("cluster_nodes_json")
+	if err != nil {
+		t.Fatalf("tofu output cluster_nodes_json: %v", err)
 	}
-	inventoryPath, err := ansibleClient.GenerateInventory(inventoryTemplate, inventoryEnv)
+	inventoryPath, err := ansibleClient.GenerateInventoryFromNodes(clusterNodesJSON, clusterType, "default")
 	if err != nil {
 		t.Fatalf("generate inventory: %v", err)
 	}
@@ -751,7 +748,11 @@ func provisionHarvesterStandaloneCluster(
 		t.Fatalf("ansible-playbook (%s): %v", clusterType, err)
 	}
 
-	return clusterCfg.KubeconfigOutputPath
+	kubeconfigPath := clusterCfg.KubeconfigOutputPath
+	if kubeconfigPath == "" {
+		kubeconfigPath = filepath.Join(repoPath, filepath.Dir(playbookPath), "kubeconfig.yaml")
+	}
+	return kubeconfigPath
 }
 
 // ProvisionAWSRKE2Cluster provisions a standalone RKE2 cluster on AWS EC2 instances
@@ -892,26 +893,25 @@ func provisionAWSStandaloneCluster(
 		logrus.Warn("[qainfraautomation] cleanup disabled: EC2 nodes will NOT be destroyed after test")
 	}
 
-	var playbookPath, inventoryTemplate, varsFile string
+	var playbookPath, varsFile string
 	switch clusterType {
 	case "rke2":
 		playbookPath = rke2Playbook
-		inventoryTemplate = rke2InventoryTemplate
 		varsFile = rke2VarsFile
 	case "k3s":
 		playbookPath = k3sPlaybook
-		inventoryTemplate = k3sInventoryTemplate
 		varsFile = k3sVarsFile
 	default:
 		t.Fatalf("unsupported cluster type: %s (must be rke2 or k3s)", clusterType)
 	}
 
 	ansibleClient := ansible.NewClient(repoPath)
-	inventoryEnv := map[string]string{
-		"TERRAFORM_NODE_SOURCE": awsClusterNodesModulePath,
-		"TF_WORKSPACE":          workspace,
+
+	clusterNodesJSON, err := nodeTofu.Output("cluster_nodes_json")
+	if err != nil {
+		t.Fatalf("tofu output cluster_nodes_json: %v", err)
 	}
-	inventoryPath, err := ansibleClient.GenerateInventory(inventoryTemplate, inventoryEnv)
+	inventoryPath, err := ansibleClient.GenerateInventoryFromNodes(clusterNodesJSON, clusterType, "default")
 	if err != nil {
 		t.Fatalf("generate inventory: %v", err)
 	}
@@ -959,7 +959,7 @@ func provisionAWSStandaloneCluster(
 
 	kubeconfigPath := clusterCfg.KubeconfigOutputPath
 	if kubeconfigPath == "" {
-		kubeconfigPath = "kubeconfig.yaml"
+		kubeconfigPath = filepath.Join(repoPath, filepath.Dir(playbookPath), "kubeconfig.yaml")
 	}
 
 	return StandaloneClusterResult{
@@ -1017,6 +1017,8 @@ func InstallRancher(
 
 	if rancherCfg.ImageTag != "" {
 		vars["rancher_image_tag"] = rancherCfg.ImageTag
+	} else {
+		vars["rancher_image_tag"] = ""
 	}
 
 	if rancherCfg.CertManagerVersion != "" {
