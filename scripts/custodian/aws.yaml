@@ -8,8 +8,8 @@ policies:
   filters:
     - type: value
       key: State.Name
-      op: in
-      value: [running, stopped]
+      op: not-in
+      value: [shutting-down, terminated]
     # instance name not in accepted user keys
     - type: value
       key: tag:Name
@@ -40,8 +40,8 @@ policies:
   filters:
     - type: value
       key: State.Name
-      op: in
-      value: [running, stopped]
+      op: not-in
+      value: [shutting-down, terminated]
     - type: value
       key: tag:Name
       op: regex

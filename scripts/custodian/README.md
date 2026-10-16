@@ -2,7 +2,7 @@
 
 QA custodian will clean up resources in AWS, GCR, and AZURE. Currently, we have automation configured for:
 * AWS
-  * instances (running and stopped)
+  * instances (in any state except shutting down or terminated)
   * NLBs
   * EKS
   * ssh keys
